@@ -1,7 +1,7 @@
 import libvirt
 
 def getConnection():
-    conn = libvirt.openReadOnly(None)
+    conn = libvirt.open(None)
     if conn is None:
         print('Failed to open connection to the hypervisor')
 

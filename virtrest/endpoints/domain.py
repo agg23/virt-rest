@@ -14,22 +14,30 @@ class Domains(Resource):
 
 class Domain(Resource):
     def get(self, name=None):
-        connection = getConnection()
-
         if name is None:
             abort(400)
 
-        try:
-            if isInt(name):
-                domain = connection.lookupByID(int(name))
-            else:
-                domain = connection.lookupByName(name)
-        except:
-            abort(404)
+        connection = getConnection()
 
+        domain = lookupDomain(name)
+        if domain is None:
+            abort(404)
         domainDict = parseCommonDomain(domain)
 
         return jsonify(domainDict)
+
+def lookupDomain(name):
+    connection = getConnection()
+
+    try:
+        if isInt(name):
+            domain = connection.lookupByID(int(name))
+        else:
+            domain = connection.lookupByName(name)
+    except:
+        return None
+
+    return domain
 
 def parseCommonDomain(domain):
     domainDict = {}

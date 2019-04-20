@@ -1,10 +1,11 @@
-from flask import jsonify
-from flask_restful import Resource
+from flask import jsonify, request
+from flask_restful import Resource, abort
 
 import re
 import subprocess
 
 from virtrest.connection import getConnection
+from virtrest.endpoints.domain import lookupDomain
 
 class USB(Resource):
     def get(self):
@@ -26,3 +27,45 @@ class USB(Resource):
                     devices.append(dinfo)
 
         return jsonify(devices)
+
+class USBAttach(Resource):
+    def get(self, domainName):
+        args = request.args
+        usbId = args["id"]
+
+        print(args)
+
+        if domainName is None or usbId is None:
+            abort(400)
+
+        domain = lookupDomain(domainName)
+
+        if domain is None:
+            abort(404)
+
+        ids = extractIds(usbId)
+        if ids is None:
+            abort(404)
+
+        idVendor, idProduct = ids
+        xml = buildUSBXML(idVendor, idProduct)
+
+        domain.attachDevice(xml)
+
+def extractIds(usbId):
+    splitId = usbId.split(":")
+
+    if len(splitId) != 2:
+        return None
+
+    return splitId
+
+def buildUSBXML(idVendor, idProduct):
+    return """
+        <hostdev mode='subsystem' type='usb'>
+            <source>
+                <vendor id='0x{0}'/>
+                <product id='0x{1}'/>
+            </source>
+        </hostdev>
+    """.format(idVendor, idProduct)
