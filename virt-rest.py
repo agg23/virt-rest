@@ -5,7 +5,7 @@ from flask import Flask
 from flask_restful import Api
 
 from virtrest.connection import getConnection
-from virtrest.endpoints.domain import Domains, Domain
+from virtrest.endpoints.domain import Domains, Domain, DomainState
 from virtrest.endpoints.usb import USB, USBAttach
 
 app = Flask(__name__)
@@ -13,6 +13,7 @@ api = Api(app)
 
 api.add_resource(Domains, '/domains/')
 api.add_resource(Domain, '/domain/<name>')
+api.add_resource(DomainState, '/domain/<name>/status')
 api.add_resource(USB, '/usb/')
 api.add_resource(USBAttach, '/usb/attach/<domainName>')
 

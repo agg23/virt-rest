@@ -1,4 +1,4 @@
-from flask import jsonify
+from flask import jsonify, request
 from flask_restful import Resource, abort
 
 from virtrest.connection import getConnection
@@ -14,17 +14,49 @@ class Domains(Resource):
 
 class Domain(Resource):
     def get(self, name=None):
-        if name is None:
-            abort(400)
-
-        connection = getConnection()
-
-        domain = lookupDomain(name)
-        if domain is None:
-            abort(404)
+        domain = getDomainWithErrors(name)
         domainDict = parseCommonDomain(domain)
 
         return jsonify(domainDict)
+
+class DomainState(Resource):
+    def post(self, name=None):
+        domain = getDomainWithErrors(name)
+
+        jsonData = request.get_json()
+
+        if jsonData is None:
+            abort(400, message="No payload provided")
+
+        if "action" not in jsonData:
+            abort(400, message="No action provided")
+
+        action = jsonData["action"]
+
+        if action == "create":
+            domain.create()
+        elif action == "reboot":
+            domain.reboot()
+        elif action == "reset":
+            domain.reset()
+        elif action == "resume":
+            domain.resume()
+        elif action == "suspend":
+            domain.suspend()
+        elif action == "shutdown":
+            domain.shutdown()
+        else:
+            abort(400, message="Invalid action provided")
+
+def getDomainWithErrors(name):
+    if name is None:
+        abort(400, message="No domain provided")
+
+    domain = lookupDomain(name)
+    if domain is None:
+        abort(404, message="Domain \"{0}\" could not be found".format(name))
+
+    return domain
 
 def lookupDomain(name):
     connection = getConnection()
