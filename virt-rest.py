@@ -3,10 +3,11 @@ import sys
 
 from flask import Flask, jsonify
 from flask_restful import Api
+from werkzeug.exceptions import HTTPException
 
 from virtrest.connection import getConnection
 from virtrest.endpoints.domain import Domains, Domain, DomainState
-from virtrest.endpoints.usb import USB, USBAttach
+from virtrest.endpoints.usb import USB, USBState
 
 app = Flask(__name__)
 api = Api(app)
@@ -15,11 +16,7 @@ api.add_resource(Domains, '/domains/')
 api.add_resource(Domain, '/domain/<name>')
 api.add_resource(DomainState, '/domain/<name>/status')
 api.add_resource(USB, '/usb/')
-api.add_resource(USBAttach, '/usb/attach/<domainName>')
-
-@app.errorhandler(Exception)
-def handle_error(e):
-    return jsonify(error=str(e))
+api.add_resource(USBState, '/usb/state/<domainName>')
 
 def signal_handler(sig, frame):
     print("SIGINT recieved")

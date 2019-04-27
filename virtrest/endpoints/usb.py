@@ -5,7 +5,7 @@ import re
 import subprocess
 
 from virtrest.connection import getConnection
-from virtrest.endpoints.domain import lookupDomain
+from virtrest.endpoints.domain import getDomainWithErrors
 
 class USB(Resource):
     def get(self):
@@ -28,29 +28,40 @@ class USB(Resource):
 
         return jsonify(devices)
 
-class USBAttach(Resource):
-    def get(self, domainName):
-        args = request.args
-        usbId = args["id"]
+class USBState(Resource):
+    def post(self, domainName=None):
+        jsonData = request.get_json()
 
-        print(args)
+        if jsonData is None:
+            abort(400, message="No payload provided")
 
-        if domainName is None or usbId is None:
-            abort(400)
+        if "action" not in jsonData:
+            abort(400, message="No action provided")
 
-        domain = lookupDomain(domainName)
+        if "id" not in jsonData:
+            abort(400, message="No id provided")
+        
+        action = jsonData["action"]
+        usbId = jsonData["id"]
 
-        if domain is None:
-            abort(404)
+        domain = getDomainWithErrors(domainName)
+
+        if usbId is None:
+            abort(400, message="No USB ID provided")
 
         ids = extractIds(usbId)
         if ids is None:
-            abort(404)
+            abort(400, message="USB ID \"{0}\" is invalid".format(usbId))
 
         idVendor, idProduct = ids
         xml = buildUSBXML(idVendor, idProduct)
 
-        domain.attachDevice(xml)
+        if action == "attach":
+            domain.attachDevice(xml)
+        elif action == "detach":
+            domain.detachDevice(xml)
+        else:
+            abort(400, message="Invalid action provided")
 
 def extractIds(usbId):
     splitId = usbId.split(":")
