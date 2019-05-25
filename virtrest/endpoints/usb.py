@@ -1,5 +1,6 @@
 from flask import jsonify, request
 from flask_restful import Resource, abort
+from libvirt import VIR_CONNECT_LIST_NODE_DEVICES_CAP_USB_INTERFACE
 
 import re
 import subprocess
@@ -62,6 +63,8 @@ class USBState(Resource):
             domain.detachDevice(xml)
         else:
             abort(400, message="Invalid action provided")
+
+        return {}
 
 def extractIds(usbId):
     splitId = usbId.split(":")

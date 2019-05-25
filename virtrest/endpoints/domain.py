@@ -85,6 +85,8 @@ def parseCommonDomain(domain):
     if info is not None:
         domainDict["info"] = info
 
+    domainDict["state"] = domain.state()
+
     domainDict["running"] = domain.isActive() == 1
 
     return domainDict
